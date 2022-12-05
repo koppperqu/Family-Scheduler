@@ -34,9 +34,9 @@ namespace CIS341_Project.Controllers
         // GET: Tasks/Create
         public IActionResult Create()
         {
-            ViewData["FrequencyID"] = new SelectList(_context.Frequencies, "FrequencyID", "Description");
-            ViewData["TaskTypeID"] = new SelectList(_context.TaskTypes, "TaskTypeID", "Description");
-            ViewData["WorkloadID"] = new SelectList(_context.Workloads, "WorkloadID", "Description");
+            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "Description", "Description");
+            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "Description", "Description");
+            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "Description", "Description");
             return View();
         }
 
