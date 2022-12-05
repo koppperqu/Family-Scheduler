@@ -1,0 +1,33 @@
+﻿@page
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model CIS341_Project.GenerateScheduleModel
+@{
+	Layout = "/Views/Shared/_Layout.cshtml";
+}
+<h1>Generate Schedule</h1>
+
+<p>
+    This page will take 2 inputs based on frequency and workload then use the provided schedule generator <br />
+    to create the assignments for each person as to which tasks they have to do. This will override the current schedule.
+</p>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-page="GenerateSchedule">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="StartDate" class="control-label"></label>
+                <input asp-for="StartDate" class="form-control" />
+                <span asp-validation-for="StartDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="MaxTasksPerUser" class="control-label"></label>
+                <input asp-for="MaxTasksPerUser" class="form-control" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Submit" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>

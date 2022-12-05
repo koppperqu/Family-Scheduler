@@ -1,0 +1,40 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model List<CIS341_Project.Models.DTO.AllAssignmentsDTO>
+@{
+}
+<h1>Tasks for @ViewBag.loggedInHouseHoldmember</h1>
+<p>This view currently gets the tasks for @ViewBag.loggedInHouseHoldmember but eventually will get tasks for the logged in user.</p>
+<table>
+    @*Make the first row with the names and the first column saying date*@
+    <tr>
+        <th>Date</th>
+        @foreach (var name in ViewBag.HouseholdMembersWithAssignments)
+        {
+            <th>
+                @name
+            </th>
+        }
+    </tr>
+    @foreach (CIS341_Project.Models.DTO.AllAssignmentsDTO aADTO in Model)
+    {
+        <tr>
+            <th>
+                @aADTO.DueDate
+            </th>
+            @foreach (List<CIS341_Project.Models.DTO.AssignmentDTO> householdMembersAssignments in aADTO.HouseholdMembersAssignments)
+            {
+                <td>
+                    @foreach (CIS341_Project.Models.DTO.AssignmentDTO assignment in householdMembersAssignments)
+                    {
+                        <div>
+                            <input asp-for=@assignment.Completed /> @assignment.TaskDescription
+                        </div>
+                    }
+                </td>
+            }
+        </tr>
+    }
+    @*Make the rest of the rows with the passed in model everytime the date changes new row*@
+</table>

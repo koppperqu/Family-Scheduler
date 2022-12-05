@@ -1,0 +1,57 @@
+﻿@model IEnumerable<CIS341_Project.Models.DTO.TaskDTO>
+
+@{
+    
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+</head>
+<body>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                    @Html.DisplayNameFor(model => model.FrequencyDescription)
+            </th>
+            <th>
+                    @Html.DisplayNameFor(model => model.TaskTypeDescription)
+            </th>
+            <th>
+                    @Html.DisplayNameFor(model => model.WorkloadDescription)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Description)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.FrequencyDescription)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TaskTypeDescription)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.WorkloadDescription)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.TaskID">Edit</a> |
+                <a asp-action="Delete" asp-route-id="@item.TaskID">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+</body>
+</html>
