@@ -27,16 +27,16 @@ namespace CIS341_Project.Controllers
         {
             var familySchedulerContext = _context.Tasks.Include(t => t.Frequency).Include(t => t.TaskType).Include(t => t.Workload);
             TaskDTO taskDTO = new();
-            IEnumerable<TaskDTO> tasks = taskDTO.makeEnumerable(await familySchedulerContext.ToListAsync());
+            IEnumerable<TaskDTO> tasks = taskDTO.makeList(await familySchedulerContext.ToListAsync());
             return View(tasks);
         }
 
         // GET: Tasks/Create
         public IActionResult Create()
         {
-            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "Description", "Description");
-            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "Description", "Description");
-            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "Description", "Description");
+            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "Description", "FrequencyID");
+            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "Description", "TaskTypeID");
+            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "Description", "WorkloadID");
             return View();
         }
 

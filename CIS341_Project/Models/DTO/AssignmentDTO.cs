@@ -18,7 +18,7 @@ namespace CIS341_Project.Models.DTO
             AssignmentID = assignment.AssignmentID;
             TaskDescription = assignment.Task.Description;
             HouseholdMemberName = assignment.HouseholdMember.Name;
-            Date = DateOnly.Parse(assignment.Date.ToString().Replace(" 12:00:00 AM", ""));
+            Date = DateOnly.FromDateTime(assignment.Date);
             Completed = assignment.Completed;
         }
     }

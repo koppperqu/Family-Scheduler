@@ -9,6 +9,6 @@ namespace CIS341_Project.Areas.Identity.Data;
 // Add profile data for application users by adding properties to the ApplicationUser class
 public class ApplicationUser : IdentityUser
 {
-    public string UserAccountID { get; set; } = string.Empty;
+    public int HouseholdMemberID { get; set; }
 }
 

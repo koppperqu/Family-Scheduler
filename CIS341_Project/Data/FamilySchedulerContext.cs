@@ -17,6 +17,5 @@ namespace CIS341_Project.Data
         public DbSet<Task> Tasks { get; set; }
         public DbSet<TaskType> TaskTypes { get; set; }
         public DbSet<Workload> Workloads { get; set; }
-        public DbSet<UserAccount> UserAccounts { get; set; }
     }
 }

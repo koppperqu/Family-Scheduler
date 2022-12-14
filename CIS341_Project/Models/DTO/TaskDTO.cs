@@ -24,7 +24,7 @@ namespace CIS341_Project.Models.DTO
             TaskTypeDescription = task.TaskType.Description;
         }
 
-        internal List<TaskDTO> makeEnumerable(List<Task> tasks)
+        internal List<TaskDTO> makeList(List<Task> tasks)
         {
             List<TaskDTO> list = new List<TaskDTO>();
             foreach (Task task in tasks)
