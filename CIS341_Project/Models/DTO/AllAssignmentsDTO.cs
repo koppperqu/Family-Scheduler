@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace CIS341_Project.Models.DTO
@@ -7,7 +8,9 @@ namespace CIS341_Project.Models.DTO
     public class AllAssignmentsDTO
     {
         //Date with only date is mm/dd/yyyy (Will be first column in the row)
-        public DateOnly? DueDate { get; set; }
+
+        [DataType(DataType.Date)]
+        public DateTime DueDate { get; set; }
         //List of assignments lists, each list represents a household member these will be in alphabetical order
         public List<List<AssignmentDTO>>? HouseholdMembersAssignments { get; set; }
 

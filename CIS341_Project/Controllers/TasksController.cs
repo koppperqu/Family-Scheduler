@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace CIS341_Project.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class TasksController : Controller
     {
         private readonly FamilySchedulerContext _context;
@@ -25,18 +25,18 @@ namespace CIS341_Project.Controllers
         // GET: Tasks
         public async Task<IActionResult> Index()
         {
-            var familySchedulerContext = _context.Tasks.Include(t => t.Frequency).Include(t => t.TaskType).Include(t => t.Workload);
+            var tasks = await _context.Tasks.Include(t => t.Frequency).Include(t => t.TaskType).Include(t => t.Workload).ToListAsync();
             TaskDTO taskDTO = new();
-            IEnumerable<TaskDTO> tasks = taskDTO.makeList(await familySchedulerContext.ToListAsync());
-            return View(tasks);
+            IEnumerable<TaskDTO> tasksDTO = taskDTO.makeList(tasks);
+            return View(tasksDTO);
         }
 
         // GET: Tasks/Create
         public IActionResult Create()
         {
-            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "Description", "FrequencyID");
-            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "Description", "TaskTypeID");
-            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "Description", "WorkloadID");
+            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "FrequencyID", "Description");
+            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "TaskTypeID", "Description");
+            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "WorkloadID", "Description");
             return View();
         }
 
@@ -45,23 +45,26 @@ namespace CIS341_Project.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("TaskID,Description,FrequencyDescription,TaskTypeDescription,WorkloadDescription")] TaskDTO task)
+        public async Task<IActionResult> Create([Bind("TaskID,Description,FrequencyID,TaskTypeID,WorkloadID")] TaskDTO taskDTO)
         {
             if (ModelState.IsValid)
             {
-                Task t = new Task();
-                t.Description = task.Description;
-                t.FrequencyID = _context.Frequencies.First(l => l.Description == task.FrequencyDescription).FrequencyID;
-                t.TaskTypeID = _context.TaskTypes.First(l => l.Description == task.TaskTypeDescription).TaskTypeID;
-                t.WorkloadID = _context.Workloads.First(l => l.Description == task.WorkloadDescription).WorkloadID;
-                _context.Add(t);
+                Task task = new Task
+                {
+                    TaskID = taskDTO.TaskID,
+                    Description = taskDTO.Description,
+                    FrequencyID = taskDTO.FrequencyID,
+                    TaskTypeID = taskDTO.TaskTypeID,
+                    WorkloadID = taskDTO.WorkloadID
+                };
+                _context.Add(task);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "Description", "Description", task.FrequencyDescription);
-            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "Description", "Description", task.TaskTypeDescription);
-            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "Description", "Description", task.WorkloadDescription);
-            return View(task);
+            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "FrequencyID", "Description", taskDTO.FrequencyID);
+            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "TaskTypeID", "Description", taskDTO.TaskTypeID);
+            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "WorkloadID", "Description", taskDTO.WorkloadID);
+            return View(taskDTO);
         }
 
         // GET: Tasks/Edit/5
@@ -72,16 +75,16 @@ namespace CIS341_Project.Controllers
                 return NotFound();
             }
 
-            var task = await _context.Tasks.Include(t => t.Frequency).Include(t => t.TaskType).Include(t => t.Workload).FirstAsync(l=>l.TaskID == id);
+            var task = await _context.Tasks.Include(t => t.Frequency).Include(t => t.TaskType).Include(t => t.Workload).FirstAsync(l => l.TaskID == id);
             if (task == null)
             {
                 return NotFound();
             }
-            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "Description", "Description");
-            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "Description", "Description");
-            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "Description", "Description");
-            TaskDTO tDTO = new(task);
-            return View(tDTO);
+            TaskDTO taskDTO = new(task);
+            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "FrequencyID", "Description", taskDTO.FrequencyDescription);
+            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "TaskTypeID", "Description", taskDTO.TaskTypeDescription);
+            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "WorkloadID", "Description", taskDTO.WorkloadDescription);
+            return View(taskDTO);
         }
 
         // POST: Tasks/Edit/5
@@ -89,11 +92,11 @@ namespace CIS341_Project.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("TaskID,Description,FrequencyDescription,TaskTypeDescription,WorkloadDescription")] TaskDTO task)
+        public async Task<IActionResult> Edit(int id, [Bind("TaskID,Description,FrequencyID,TaskTypeID,WorkloadID")] TaskDTO taskDTO)
         {
             //Took this out of edit parameter-> 
             //This is giving errors id is not being set when submitted
-                if (id != task.TaskID)
+            if (id != taskDTO.TaskID)
             {
                 return NotFound();
             }
@@ -102,18 +105,20 @@ namespace CIS341_Project.Controllers
             {
                 try
                 {
-                    Task t = new();
-                    t.TaskID = task.TaskID;
-                    t.Description = task.Description;
-                    t.FrequencyID = _context.Frequencies.First(l => l.Description == task.FrequencyDescription).FrequencyID;
-                    t.TaskTypeID = _context.TaskTypes.First(l => l.Description == task.TaskTypeDescription).TaskTypeID;
-                    t.WorkloadID = _context.Workloads.First(l => l.Description == task.WorkloadDescription).WorkloadID;
-                    _context.Update(t);
-                    await _context.SaveChangesAsync();
+                    if (TaskExists(id))
+                    {
+                        var task = await _context.Tasks.FirstAsync(l => l.TaskID == id);
+                        task.FrequencyID = taskDTO.FrequencyID;
+                        task.Description = taskDTO.Description;
+                        task.TaskTypeID = taskDTO.TaskTypeID;
+                        task.WorkloadID = taskDTO.WorkloadID;
+                        await _context.SaveChangesAsync();
+                    }
+                    else return NotFound();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!TaskExists(task.TaskID))
+                    if (!TaskExists(taskDTO.TaskID))
                     {
                         return NotFound();
                     }
@@ -124,10 +129,10 @@ namespace CIS341_Project.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "Description", "Description", task.FrequencyDescription);
-            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "Description", "Description", task.TaskTypeDescription);
-            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "Description", "Description", task.WorkloadDescription);
-            return View(task);
+            ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "FrequencyID", "Description", taskDTO.FrequencyDescription);
+            ViewData["TaskTypeDescription"] = new SelectList(_context.TaskTypes, "TaskTypeID", "Description", taskDTO.TaskTypeDescription);
+            ViewData["WorkloadDescription"] = new SelectList(_context.Workloads, "WorkloadID", "Description", taskDTO.WorkloadDescription);
+            return View(taskDTO);
         }
 
         // GET: Tasks/Delete/5
@@ -165,14 +170,14 @@ namespace CIS341_Project.Controllers
             {
                 _context.Tasks.Remove(t);
             }
-            
+
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool TaskExists(int id)
         {
-          return _context.Tasks.Any(e => e.TaskID == id);
+            return _context.Tasks.Any(e => e.TaskID == id);
         }
     }
 }

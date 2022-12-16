@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace CIS341_Project.Controllers
 {
-    [Authorize]
     public class AssignmentsController : Controller
     {
         private readonly FamilySchedulerContext _context;
@@ -23,10 +22,12 @@ namespace CIS341_Project.Controllers
         }
 
         // GET: Assignments/Create
+
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
-            ViewData["HouseholdMemberID"] = new SelectList(_context.HouseholdMembers, "HouseholdMemberID", "Name");
-            ViewData["TaskID"] = new SelectList(_context.Tasks, "TaskID", "TaskID");
+            ViewData["HouseholdMemberName"] = new SelectList(_context.HouseholdMembers, "HouseholdMemberID", "Name");
+            ViewData["TaskDescription"] = new SelectList(_context.Tasks, "TaskID", "Description");
             return View();
         }
 
@@ -34,21 +35,30 @@ namespace CIS341_Project.Controllers
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken] 
-        public async Task<IActionResult> Create([Bind("AssignmentID,TaskID,HouseholdMemberID,Date,Completed")] Assignment assignment)
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([Bind("AssignmentID,TaskID,HouseholdMemberID,Date,Completed")] AssignmentDTO assignmentDTO)
         {
             if (ModelState.IsValid)
             {
+                Assignment assignment = new Assignment
+                {
+                    Completed = assignmentDTO.Completed,
+                    Date = assignmentDTO.Date,
+                    HouseholdMemberID = assignmentDTO.HouseholdMemberID,
+                    TaskID = assignmentDTO.TaskID
+                };
                 _context.Add(assignment);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(AllAssignments));
             }
-            ViewData["HouseholdMemberID"] = new SelectList(_context.HouseholdMembers, "HouseholdMemberID", "Name", assignment.HouseholdMemberID);
-            ViewData["TaskID"] = new SelectList(_context.Tasks, "TaskID", "TaskID", assignment.TaskID);
-            return View(assignment);
+            ViewData["HouseholdMemberID"] = new SelectList(_context.HouseholdMembers, "HouseholdMemberID", "Name", assignmentDTO.HouseholdMemberID);
+            ViewData["TaskID"] = new SelectList(_context.Tasks, "TaskID", "Description", assignmentDTO.TaskID);
+            return View(assignmentDTO);
         }
 
         // GET: Assignments/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null || _context.Assignments == null)
@@ -56,14 +66,18 @@ namespace CIS341_Project.Controllers
                 return NotFound();
             }
 
-            var assignment = await _context.Assignments.FindAsync(id);
+            var assignment = await _context.Assignments.Include(i => i.Task)
+                .Include(i => i.HouseholdMember)
+                .Where(i => i.AssignmentID == id)
+                .FirstOrDefaultAsync();
             if (assignment == null)
             {
                 return NotFound();
             }
-            ViewData["HouseholdMemberID"] = new SelectList(_context.HouseholdMembers, "HouseholdMemberID", "Name", assignment.HouseholdMemberID);
-            ViewData["TaskID"] = new SelectList(_context.Tasks, "TaskID", "TaskID", assignment.TaskID);
-            return View(assignment);
+            AssignmentDTO assignmentDTO = new AssignmentDTO(assignment);
+            ViewData["HouseholdMemberID"] = new SelectList(_context.HouseholdMembers, "HouseholdMemberID", "Name", assignmentDTO.HouseholdMemberID);
+            ViewData["TaskID"] = new SelectList(_context.Tasks, "TaskID", "Description", assignmentDTO.TaskID);
+            return View(assignmentDTO);
         }
 
         // POST: Assignments/Edit/5
@@ -71,9 +85,10 @@ namespace CIS341_Project.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("AssignmentID,TaskID,HouseholdMemberID,Date,Completed")] Assignment assignment)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Edit(int id, [Bind("AssignmentID,TaskID,HouseholdMemberID,Date,Completed")] AssignmentDTO assignmentDTO)
         {
-            if (id != assignment.AssignmentID)
+            if (id != assignmentDTO.AssignmentID)
             {
                 return NotFound();
             }
@@ -82,12 +97,20 @@ namespace CIS341_Project.Controllers
             {
                 try
                 {
+                    Assignment assignment = new Assignment
+                    {
+                        AssignmentID = assignmentDTO.AssignmentID,
+                        Completed = assignmentDTO.Completed,
+                        Date = assignmentDTO.Date,
+                        HouseholdMemberID = assignmentDTO.HouseholdMemberID,
+                        TaskID = assignmentDTO.TaskID
+                    };
                     _context.Update(assignment);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!AssignmentExists(assignment.AssignmentID))
+                    if (!AssignmentExists(assignmentDTO.AssignmentID))
                     {
                         return NotFound();
                     }
@@ -96,14 +119,15 @@ namespace CIS341_Project.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(AllAssignments));
             }
-            ViewData["HouseholdMemberID"] = new SelectList(_context.HouseholdMembers, "HouseholdMemberID", "Name", assignment.HouseholdMemberID);
-            ViewData["TaskID"] = new SelectList(_context.Tasks, "TaskID", "TaskID", assignment.TaskID);
-            return View(assignment);
+            ViewData["HouseholdMemberID"] = new SelectList(_context.HouseholdMembers, "HouseholdMemberID", "Name", assignmentDTO.HouseholdMemberID);
+            ViewData["TaskID"] = new SelectList(_context.Tasks, "TaskID", "Description", assignmentDTO.TaskID);
+            return View(assignmentDTO);
         }
 
         // GET: Assignments/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null || _context.Assignments == null)
@@ -119,13 +143,14 @@ namespace CIS341_Project.Controllers
             {
                 return NotFound();
             }
-
-            return View(assignment);
+            AssignmentDTO assignmentDTO = new AssignmentDTO(assignment);
+            return View(assignmentDTO);
         }
 
         // POST: Assignments/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             if (_context.Assignments == null)
@@ -137,18 +162,21 @@ namespace CIS341_Project.Controllers
             {
                 _context.Assignments.Remove(assignment);
             }
-            
+
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(AllAssignments));
         }
 
         private bool AssignmentExists(int id)
         {
-          return _context.Assignments.Any(e => e.AssignmentID == id);
+            return _context.Assignments.Any(e => e.AssignmentID == id);
         }
+        [Authorize(Roles = "Admin")]
         public IActionResult AllAssignments()
         {
-            List<Assignment> allAssignments = _context.Assignments.Include("HouseholdMember").Include("Task").ToList();
+            List<Assignment> allAssignments = _context.Assignments
+                .Include("HouseholdMember")
+                .Include("Task").ToList();
 
             List<AssignmentDTO> assignmentDTOs = new List<AssignmentDTO>();
 
@@ -159,8 +187,12 @@ namespace CIS341_Project.Controllers
                 assignmentDTOs.Add(assignmentDTO);
             }
 
-                var householdMembersWithAssignments = (from assignment in allAssignments
-                                                   select assignment.HouseholdMember.Name).ToList().Distinct().OrderBy(x => x).ToList();
+            var householdMembersWithAssignments = (from assignment in allAssignments
+                                                   select assignment.HouseholdMember.Name)
+                                                   .ToList()
+                                                   .Distinct()
+                                                   .OrderBy(x => x)
+                                                   .ToList();
             ViewBag.HouseholdMembersWithAssignments = householdMembersWithAssignments;
 
             List<AllAssignmentsDTO> allAssignemtnsDTOs = AllAssignmentsDTO.toListOfAllAssignemntsDTOs(assignmentDTOs, householdMembersWithAssignments);
@@ -168,32 +200,64 @@ namespace CIS341_Project.Controllers
 
             return View(allAssignemtnsDTOs);
         }
-
         public IActionResult MyAssignedTasks()
         {
-            //For not app will only displays beths tasks/assignments since identity is not fully implemented yet
-            //In the furture grab logged in user and display their assignments
-            string loggedInUser = "Jimbo";
-            ViewBag.loggedInHouseHoldmember = loggedInUser;
-            List <Assignment> loggedInUsersAssignments = _context.Assignments.Include("HouseholdMember").Include("Task").Where(a=>a.HouseholdMember.Name==loggedInUser).ToList();
-
-            List<AssignmentDTO> assignmentDTOs = new List<AssignmentDTO>();
-
-
-            foreach (Assignment assignment in loggedInUsersAssignments)
+            if (User.Identity != null && User.Identity.Name != null && User.Identity.IsAuthenticated)
             {
-                AssignmentDTO assignmentDTO = new AssignmentDTO(assignment);
-                assignmentDTOs.Add(assignmentDTO);
+                string loggedInUser = User.Identity.Name;
+
+
+                ViewBag.loggedInHouseHoldmember = loggedInUser;
+                List<Assignment> loggedInUsersAssignments = _context.Assignments
+                                                        .Include("HouseholdMember")
+                                                        .Include("Task")
+                                                        .Where(a => a.HouseholdMember.Name == loggedInUser)
+                                                        .ToList();
+
+                List<AssignmentDTO> assignmentDTOs = new List<AssignmentDTO>();
+
+
+                foreach (Assignment assignment in loggedInUsersAssignments)
+                {
+                    AssignmentDTO assignmentDTO = new AssignmentDTO(assignment);
+                    assignmentDTOs.Add(assignmentDTO);
+                }
+
+                var householdMembersWithAssignments = (from assignment in loggedInUsersAssignments
+                                                       select assignment.HouseholdMember.Name)
+                                                       .ToList()
+                                                       .Distinct()
+                                                       .OrderBy(x => x)
+                                                       .ToList();
+                ViewBag.HouseholdMembersWithAssignments = householdMembersWithAssignments;
+
+                List<AllAssignmentsDTO> allAssignemtnsDTOs = AllAssignmentsDTO.toListOfAllAssignemntsDTOs(assignmentDTOs, householdMembersWithAssignments);
+
+
+                return View(allAssignemtnsDTOs);
             }
+            else return RedirectToAction(nameof(MyAssignedTasks));
+        }
 
-            var householdMembersWithAssignments = (from assignment in loggedInUsersAssignments
-                                                   select assignment.HouseholdMember.Name).ToList().Distinct().OrderBy(x => x).ToList();
-            ViewBag.HouseholdMembersWithAssignments = householdMembersWithAssignments;
+        public async Task<IActionResult> UpdateAssignmentCompletion(int? id)
+        {
+            if (User.Identity != null && User.Identity.Name != null && User.Identity.IsAuthenticated)
+            {
+                var assignment = await _context.Assignments.Include("HouseholdMember").Where(a=>a.AssignmentID==id).FirstOrDefaultAsync();
+                if (assignment == null)
+                {
+                    return NotFound();
+                }
+                if (User.Identity.Name == assignment.HouseholdMember.Name)
+                {
+                    assignment.Completed = !assignment.Completed;
+                    await _context.SaveChangesAsync();
 
-            List<AllAssignmentsDTO> allAssignemtnsDTOs = AllAssignmentsDTO.toListOfAllAssignemntsDTOs(assignmentDTOs, householdMembersWithAssignments);
-
-
-            return View(allAssignemtnsDTOs);
+                    return RedirectToAction(nameof(MyAssignedTasks));
+                }
+                return Unauthorized();
+            }
+            else return View();
         }
     }
 }

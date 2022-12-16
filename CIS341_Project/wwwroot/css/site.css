@@ -17,22 +17,7 @@ body {
     margin-bottom: 60px;
 }
 
-th, td {
-    border: 1px solid;
-    width: auto;
-    white-space: nowrap;
-}
-
-td {
-    padding: 1%;
-}
-
-tr:nth-child(even) {
-    background: #dedede;
-}
-
 table {
-    overflow: auto;
     height: 100%;
     width: 100%;
     display: block;

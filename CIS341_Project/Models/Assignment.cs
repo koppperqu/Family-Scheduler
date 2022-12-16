@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace CIS341_Project.Models
 {
@@ -8,6 +9,7 @@ namespace CIS341_Project.Models
         public int TaskID { get; set; } //FK
         public int HouseholdMemberID { get; set; } //FK
         [DisplayName("Date Due")]
+        [DataType(DataType.Date)]
         public DateTime Date { get; set; }
         [DisplayName("Assignment Completed?")]
         public bool Completed { get; set; }

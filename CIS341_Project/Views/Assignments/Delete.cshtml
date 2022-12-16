@@ -1,4 +1,4 @@
-﻿@model CIS341_Project.Models.Assignment
+﻿@model CIS341_Project.Models.DTO.AssignmentDTO
 
 @{
     ViewData["Title"] = "Delete";
@@ -24,16 +24,16 @@
             @Html.DisplayFor(model => model.Completed)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Task)
+            @Html.DisplayNameFor(model => model.TaskDescription)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Task.TaskID)
+            @Html.DisplayFor(model => model.TaskDescription)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.HouseholdMember)
+            @Html.DisplayNameFor(model => model.HouseholdMemberName)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.HouseholdMember.Name)
+            @Html.DisplayFor(model => model.HouseholdMemberName)
         </dd>
     </dl>
     

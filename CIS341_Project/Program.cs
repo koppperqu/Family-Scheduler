@@ -65,7 +65,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+app.UseHttpsRedirection(); 
+app.UseStatusCodePages();
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -75,7 +76,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Tasks}/{action=Index}/{id?}");
+    pattern: "{controller=Assignments}/{action=MyAssignedTasks}/{id?}");
 
 app.MapRazorPages();
 
