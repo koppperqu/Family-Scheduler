@@ -12,16 +12,31 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace CIS341_Project.Controllers
 {
+    ///<summary>
+    ///This is a controller which is used to perform CRUD on the Assignments in the application and also
+    ///let users view their assigned tasks, or admins view all assigned tasks.
+    /// </summary>
     public class AssignmentsController : Controller
     {
+        /// <value>
+        /// _context is the private field with a reference to the FamilySchedulerContext.
+        /// </value>
         private readonly FamilySchedulerContext _context;
-
+        ///<summary>
+        ///This is the constructor for the AssignmentsController that injects the FamilySchedulerContext via dependency injection.
+        /// </summary>
+        /// <param name="context">Parameter for the DbContext to be injected.</param>
+        /// <returns>Nothing</returns>
         public AssignmentsController(FamilySchedulerContext context)
         {
             _context = context;
         }
 
-        // GET: Assignments/Create
+        ///<summary>
+        ///This is the action method for the path GET: Assignments/Create it adds HouseholdMembers and Tasks to a select list in viewbag
+        ///to be displayed in the view.
+        /// </summary>
+        /// <returns>Returns the associated ViewResult to render Assignments/Create view.</returns>
 
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
@@ -31,9 +46,14 @@ namespace CIS341_Project.Controllers
             return View();
         }
 
-        // POST: Assignments/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        ///<summary>
+        ///This is the action method for the path POST: Assignments/Create it validates input data and then creates an assignment if sucessfull or if it
+        ///fails validation it will add HouseholdMembers and Tasks to a select list in viewbag along with the currently selected 
+        ///values to be displayed in the view.
+        /// </summary>
+        /// <param name="assignmentDTO">Takes a AssignmentDTO object that is bound to by the values from the POST request.</param>
+        /// <returns>If sucessful returns a redirect to the /Assignments/AllAssignments. If failed validation it returns the failed bound AssignmentDTO
+        /// to the Create view.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -57,8 +77,13 @@ namespace CIS341_Project.Controllers
             return View(assignmentDTO);
         }
 
-        // GET: Assignments/Edit/5
         [Authorize(Roles = "Admin")]
+        ///<summary>
+        ///This is the action method for the path GET: Assignments/Edit/{id} it adds HouseholdMembers and Tasks to a select list in 
+        ///viewbag along with the currently selected values for the requested Assignment to be displayed in the view.
+        /// </summary>
+        /// <param name="id">the id of a requested assignment (AssignmentID)</param>
+        /// <returns>Returns NotFound if not a good id. If it is a good ID it returns the associated view with the assignmentDTO for said Assignment with that ID</returns>
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null || _context.Assignments == null)
@@ -80,9 +105,13 @@ namespace CIS341_Project.Controllers
             return View(assignmentDTO);
         }
 
-        // POST: Assignments/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        ///<summary>
+        ///This is the action method for the path POST: Assignments/Edit/{id} it edits the selected Assignments with the values from the post.
+        /// </summary>
+        /// <param name="id">the id of a requested assignment (AssignmentID)</param>
+        /// <param name="assignmentDTO">Takes a AssignmentDTO object that is bound to by the values from the POST request.</param>
+        /// <returns>Returns NotFound if not a good id. If the values for POST request are not valid it returns the TaskDTO and adds
+        /// HouseholdMembers and Tasks to select list in the view bag. If it is a good ID it returns a redirect for the AllAssignments view.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -126,7 +155,12 @@ namespace CIS341_Project.Controllers
             return View(assignmentDTO);
         }
 
-        // GET: Assignments/Delete/5
+        ///<summary>
+        ///This is the action method for the path GET: Assignments/Delete/{id} checks if the id is valid and if so it confirms with the user if they do want
+        ///to delete the selected Assignment.
+        /// </summary>
+        /// <param name="id">The id of a requested assignment to be deleted(AssignmentID).</param>
+        /// <returns>Returns NotFound if not a good id. If it is a good ID it returns the associated view with the assignmentDTO for said Assignment with that ID.</returns>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -147,7 +181,11 @@ namespace CIS341_Project.Controllers
             return View(assignmentDTO);
         }
 
-        // POST: Assignments/Delete/5
+        ///<summary>
+        ///This is the action method for the path POST: Assignments/Delete/{id}, this will delete the requested Assignment from the DB
+        /// </summary>
+        /// <param name="id">the id of a requested assignment to be deleted(AssignmentID).</param>
+        /// <returns>Returns a problem if there is a issue with the DB, otherwise it will redirect to the AllAssignments view after deletion.</returns>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -171,9 +209,28 @@ namespace CIS341_Project.Controllers
         {
             return _context.Assignments.Any(e => e.AssignmentID == id);
         }
+        private bool AnyAssignments()
+        {
+            return _context.Assignments.Any();
+        }
+        private bool AnyAssignmentsForMember(string name)
+        {
+            return _context.Assignments.Any(a=>a.HouseholdMember.Name==name);
+        }
+
+
+        ///<summary>
+        ///This is the action method for the path GET: Assignments/AllAssignments, this will get all assignments from the DB and group/orginize them then 
+        ///display them in the view.
+        /// </summary>
+        /// <returns>Returns an allAssignmentsDTO which contains all assignments grouped by Date and Member. Also returns the associated View for AllAssigments.</returns>
         [Authorize(Roles = "Admin")]
         public IActionResult AllAssignments()
         {
+            if (!AnyAssignments())
+            {
+                ViewBag.NoAssignments = true;
+            }
             List<Assignment> allAssignments = _context.Assignments
                 .Include("HouseholdMember")
                 .Include("Task").ToList();
@@ -200,10 +257,24 @@ namespace CIS341_Project.Controllers
 
             return View(allAssignemtnsDTOs);
         }
+
+        ///<summary>
+        ///This is the action method for the path GET: Assignments/MyAssignedTasks, this will get all assignments for the logged in member from the DB and 
+        ///group/orginize them then display them in the view.
+        /// </summary>
+        /// <returns>Returns an allAssignmentsDTO which contains all assignments grouped for a member grouped by date and that member. Also returns the 
+        /// associated View for MyAssignedTasks.</returns>
         public IActionResult MyAssignedTasks()
         {
+
             if (User.Identity != null && User.Identity.Name != null && User.Identity.IsAuthenticated)
             {
+
+                if (!AnyAssignmentsForMember(User.Identity.Name))
+                {
+                    ViewBag.NoAssignmentsForMember = true;
+                }
+
                 string loggedInUser = User.Identity.Name;
 
 
@@ -239,7 +310,14 @@ namespace CIS341_Project.Controllers
             else return RedirectToAction(nameof(MyAssignedTasks));
         }
 
-        public async Task<IActionResult> UpdateAssignmentCompletion(int? id)
+        ///<summary>
+        ///This is the action method for the path GET: Assignments/UpdateAssignmentCompletion/{id}, it checks if this assignment is for the logged in user, 
+        ///if it is it flips the Completed field, i.e. marking it completed or incompleted.
+        /// </summary>
+        /// <returns>Returns a redirect to MyAssginedTasks after updated the assignment, or Unauthorized status message if the user is trying to complete a 
+        /// assignmetn that is not theirs.</returns>
+
+        public async Task<IActionResult> UpdateAssignmentCompletion(int id)
         {
             if (User.Identity != null && User.Identity.Name != null && User.Identity.IsAuthenticated)
             {

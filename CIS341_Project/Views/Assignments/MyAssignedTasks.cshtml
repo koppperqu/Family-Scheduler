@@ -5,6 +5,11 @@
 @{
 }
 <h1>Tasks for @ViewBag.loggedInHouseHoldmember</h1>
+
+@if (ViewBag.NoAssignmentsForMember != null)
+{
+    <h2>You have no tasks ask your parent to give you some</h2>
+}
 <table class="table table-striped table-hover table-bordered border-secondary overflow-auto">
     @*Make the first row with the names and the first column saying date*@
     <tr>

@@ -13,16 +13,30 @@ using Microsoft.AspNetCore.Authorization;
 namespace CIS341_Project.Controllers
 {
     [Authorize(Roles = "Admin")]
+    ///<summary>
+    ///This is a controller which is used to perform CRUD on the Tasks in the application.
+    /// </summary>
     public class TasksController : Controller
     {
+        /// <value>
+        /// _context is the private field with a reference to the FamilySchedulerContext.
+        /// </value>
         private readonly FamilySchedulerContext _context;
 
+        ///<summary>
+        ///This is the constructor for the TasksController that inject the FamilySchedulerContext via dependency injection.
+        /// </summary>
+        /// <param name="context">Parameter for the DbContext to be injected.</param>
+        /// <returns>Nothing</returns>
         public TasksController(FamilySchedulerContext context)
         {
             _context = context;
         }
 
-        // GET: Tasks
+        ///<summary>
+        ///This is the action method for the path GET: /Tasks and it gets all Tasks put them in a list of DTO's to be displayed.
+        /// </summary>
+        /// <returns>Returns IEnumerable<TaskDTO> which contains all the current tasks in the DB.</returns>
         public async Task<IActionResult> Index()
         {
             var tasks = await _context.Tasks.Include(t => t.Frequency).Include(t => t.TaskType).Include(t => t.Workload).ToListAsync();
@@ -31,7 +45,11 @@ namespace CIS341_Project.Controllers
             return View(tasksDTO);
         }
 
-        // GET: Tasks/Create
+        ///<summary>
+        ///This is the action method for the path GET: Tasks/Create it adds Frequencies, TaskTypes, and Workloads to a select list in viewbag
+        ///to be displayed in the view.
+        /// </summary>
+        /// <returns>Returns the associated ViewResult to render Tasks/Create view.</returns>
         public IActionResult Create()
         {
             ViewData["FrequencyDescription"] = new SelectList(_context.Frequencies, "FrequencyID", "Description");
@@ -40,9 +58,14 @@ namespace CIS341_Project.Controllers
             return View();
         }
 
-        // POST: Tasks/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        ///<summary>
+        ///This is the action method for the path POST: Tasks/Create it validates input data and then creates a task if sucessfull or if it
+        ///fails validation it will add Frequencies, TaskTypes, and Workloads to a select list in viewbag along with the currently selected 
+        ///values to be displayed in the view.
+        /// </summary>
+        /// <param name="taskDTO">Takes a TaskDTO object that is bound to by the values from the POST request.</param>
+        /// <returns>If sucessful returns a redirect to the /Tasks aka Index of Tasks. If failed validation it returns the failed bound taskDTO
+        /// to the Create view.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("TaskID,Description,FrequencyID,TaskTypeID,WorkloadID")] TaskDTO taskDTO)
@@ -67,7 +90,12 @@ namespace CIS341_Project.Controllers
             return View(taskDTO);
         }
 
-        // GET: Tasks/Edit/5
+        ///<summary>
+        ///This is the action method for the path GET: Tasks/Edit/{id} it adds Frequencies, TaskTypes, and Workloads to a select list in 
+        ///viewbag along with the currently selected values for the requested Task to be displayed in the view.
+        /// </summary>
+        /// <param name="id">the id of a requested task (TaskID)</param>
+        /// <returns>Returns NotFound if not a good id. If it is a good ID it returns the associated view with the taskDTO for said Task with that ID</returns>
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null || _context.Tasks == null)
@@ -87,15 +115,17 @@ namespace CIS341_Project.Controllers
             return View(taskDTO);
         }
 
-        // POST: Tasks/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        ///<summary>
+        ///This is the action method for the path POST: Tasks/Edit/{id} it edits the selected task with the values from the post.
+        /// </summary>
+        /// <param name="id">the id of a requested task (TaskID)</param>
+        /// <param name="taskDTO">Takes a TaskDTO object that is bound to by the values from the POST request.</param>
+        /// <returns>Returns NotFound if not a good id. If the values for POST request are not valid it returns the TaskDTO and add Frequencies, 
+        /// TaskTypes, and Workloads to the view bag. If it is a good ID it returns a redirect for the Tasks Index.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("TaskID,Description,FrequencyID,TaskTypeID,WorkloadID")] TaskDTO taskDTO)
         {
-            //Took this out of edit parameter-> 
-            //This is giving errors id is not being set when submitted
             if (id != taskDTO.TaskID)
             {
                 return NotFound();
@@ -135,7 +165,11 @@ namespace CIS341_Project.Controllers
             return View(taskDTO);
         }
 
-        // GET: Tasks/Delete/5
+        ///<summary>
+        ///This is the action method for the path GET: Tasks/Delete/{id} checks if the id is valid and if so it confirms with the user if they do want to delete the selected Task.
+        /// </summary>
+        /// <param name="id">The id of a requested task to be deleted(TaskID).</param>
+        /// <returns>Returns NotFound if not a good id. If it is a good ID it returns the associated view with the taskDTO for said Task with that ID.</returns>
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null || _context.Tasks == null)
@@ -156,7 +190,12 @@ namespace CIS341_Project.Controllers
             return View(tDTO);
         }
 
-        // POST: Tasks/Delete/5
+        ///<summary>
+        ///This is the action method for the path POST: Tasks/Delete/{id}, this will delete the requested Task from the DB
+        /// </summary>
+        /// <param name="id">the id of a requested task to be deleted(TaskID).</param>
+        /// <param name="task">A bound TaskDTO with the requested TaskID bound</param>
+        /// <returns>Returns a problem if there is a issue with the DB, otherwise it will redirect to the Tasks Index after deletion.</returns>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id, [Bind("TaskID")] TaskDTO task)
@@ -166,7 +205,7 @@ namespace CIS341_Project.Controllers
                 return Problem("Entity set 'FamilySchedulerContext.Tasks'  is null.");
             }
             var t = await _context.Tasks.FindAsync(task.TaskID);
-            if (task != null)
+            if (t != null)
             {
                 _context.Tasks.Remove(t);
             }
