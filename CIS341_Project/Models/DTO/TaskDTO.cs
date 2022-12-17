@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Build.Framework;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace CIS341_Project.Models.DTO
 {
@@ -9,6 +9,8 @@ namespace CIS341_Project.Models.DTO
         public int TaskID { get; set; }
         [DisplayName("Task")]
         [Required]
+        [StringLength(100)]
+
         public string Description { get; set; }
         [DisplayName("Frequency")]
         [BindNever]
@@ -35,7 +37,8 @@ namespace CIS341_Project.Models.DTO
             TaskTypeID = task.TaskTypeID;
             TaskTypeDescription = task.TaskType.Description;
         }
-
+        //This method takes a list of tasks and returns them as a list of taskDTO
+        //To be able to be passed to the view
         public List<TaskDTO> makeList(List<Task> tasks)
         {
             List<TaskDTO> list = new List<TaskDTO>();

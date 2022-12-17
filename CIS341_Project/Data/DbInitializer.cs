@@ -95,6 +95,8 @@ namespace CIS341_Project.Data
 
                 //Add assignments here this is code copied from the Generate Schedule page
                 //I dont think you can call the post method otherwise I would do that
+                //I realize now that I could have thrown it into a model class and used a method from
+                //that to be able to keep my code DRY
 
                 var _userIDs = (from members in familySchedulerContext.HouseholdMembers select members.HouseholdMemberID).ToList();
 
